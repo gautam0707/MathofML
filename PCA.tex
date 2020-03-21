@@ -1,0 +1,187 @@
+\documentclass[11pt]{article}
+\newcommand{\numpy}{{\tt numpy}}    % tt font for numpy
+\usepackage{mathtools}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{bookmark}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\usetikzlibrary{arrows}
+\usetikzlibrary{positioning}
+\graphicspath{ {./images/} }
+\topmargin -.5in
+\textheight 9in
+\oddsidemargin -.25in
+\evensidemargin -.25in
+\textwidth 7in
+
+\begin{document}
+\tikzset{%
+  every neuron/.style={
+    circle,
+    draw,
+    minimum size=1cm
+  },
+  neuron missing/.style={
+    draw=none, 
+    scale=4,
+    text height=0.333cm,
+    execute at begin node=\color{black}$\vdots$
+  },
+}
+
+
+% ========== Edit your name here
+\author{Abbavaram Gowtham Reddy}
+\title{\textbf{PCA}}
+\maketitle
+
+\section*{Problem statement:}
+
+Given a set of $N$ data points that are in $R^D$(i.e., $N$ data points in $D$ dimensional space, each dimension represents a feature), project those points onto lower dimenstion(possibly 2 or 3) for better visualisation.
+Data is represented by a $N$x$D$ matrix corresponding to $N$ data points and $D$ features for each data points
+\section*{Mathematical Background}
+\textbf{Projections:}
+
+Projecting a vector $x$ that belongs to $R^n$ on to a subspace $V$ of dimension m($R^m$) where $n \geq m$ is given by  
+\begin{equation*}
+    P^x_V = A(A^TA)^{-1}A^Tx
+\end{equation*}
+where $A$ is a vector whose columns are the basis vectors of subspace $V$. For more details how to prove the above equation, visit \href{https://www.youtube.com/watch?v=cTyNpXB92bQ}{this} link.
+
+If columns of A are orthonormal, then number of columns of A are less than or equal to number of rows of A(to match the rank property, rank(A) $\leq$ min(number of columns, number of rows)).
+Then $A^TA$ is identity, then projection simplifies to 
+\begin{equation}
+    P^x_V = AA^Tx
+\end{equation}
+
+\noindent
+\textbf{Mean of a dataset:}
+
+In given problem setting, we need to find the mean of the data set for great mathematical simplification during PCA evaluation. we have $N$x$D$ data matrix. Mean of the dataset results in a vector of $R^D$, that is mean is calculate across $D$ features.
+We subtract this mean from each data point to move the entire dataset centered at zero with out loss of generality.
+
+\noindent
+\textbf{Orthogonality, Orthonormality:}
+
+Two vectors $x$, $y$ are orthogonal to each other if $x^Ty=0$ 
+
+Two vectors $x$, $y$ are orthonormal to each other if $x^Ty=0$ and $||x||=1$ and $||y||=1$
+
+A square matrix $A$ is an orthogonal matrix if $A^T = A^{-1}$. That is columns/rows of $A$ are orthonormal.
+\noindent
+\textbf{Linear Combination, Linear Independence:}
+
+Let $X = {x_1, x_2, x_3, \dots, x_n}$ are $n$ vectors, then $\sum a_ix_i$ for $i=1,2,...n$ where $a_i$ are some scalars, is called linear combination of vectors of $X$.
+
+If the only solution to the equation $a_1x_1+a_2x_2+\dots+a_nx_n=0$ is $a_1=a_2=\dots=a_n=0$ then $x_1, x_2, \dots, x_n$ are linearly independent vectors. 
+
+\noindent
+\textbf{Eigen Values and Eigen Vectors}
+
+For a square matrix $A$, if there exists a vector $x$ such that $Ax = \lambda x$ then we call $\lambda$ an eigen value of $A$ and we call $x$ an eigen vector of $A$ corresponding to the eigen value $\lambda$ 
+\section*{Mathematics of PCA}
+Let $X = {x_1, x_2, x_3, \dots, x_N}$ are $N$ vectors(data points), and $x_i \in R^D$(D features).
+
+Now consider some orthonormal basis of $R^D$ with vectors $b_1, b_2, b_3, \dots, b_D$. Then any vector $x_n$ can be represented as a linear combination of these basis vectors as follows
+\begin{equation}
+    x_n = \sum_{i=1}^{D} \beta_{in}b_i
+\end{equation}
+
+for some scalars $\beta_{ij}$. Since $b_i^{'s}$ are orthonormal, we can write $\beta_{in}$ as follows 
+$$\beta_{in} = x_n^Tb_i$$
+Now let $B$ be the matrix formed by placing our orthonormal basis vectors as columns. i.e., $B = [b_1 b_2 b_3, \dots, b_D]$
+Then from equation 1, the projection of any vector $x_n$ onto the subspace spanned by column of $B$ is 
+$$\tilde{x_n} = BB^Tx_n$$
+Here it is easy to see that the matrix-vector product $B^Tx_n$ is a vector consisting of coordinate of $\tilde{x_n}$ with respect to the basis $b_1, b_2, b_3, \dots, b_D$.
+
+Now let us rewrite $\tilde{x_n}$ as follows
+$$\tilde{x_n} = \sum_{i=1}^{M}\beta_{in}b_i + \sum_{i=M+1}^{D}\beta_{in}b_i \in R^D$$
+\begin{equation}
+    \tilde{x_n} \approx \sum_{i=1}^{M}\beta_{in}b_i    
+\end{equation}
+
+In the above equation, we are interested in $M$ such that first term in the right hand side has as much variability/information as possible.
+we call such M-dimensional subspace of D-dimensional subspace, "Principle subspace". That is ${b_1, b_2, \dots, b_M}$ spans principle subspace. So we ignore the second term in the right hand side.
+
+Now the problems becomes finding $\beta_{in}$ and $b_i$ in the above equation such that average reconstruction error between $x_n$ and $\tilde{x_n}$ is minimized.
+Mathematically, we need to minimize the following term.
+
+\begin{equation}
+    J = \frac{1}{N} \sum_{n=1}^{N} ||x_n-\tilde{x_n}||^2 
+\end{equation}
+
+By minimizing the above term, the parameters of interest $\beta_{in}$ and $b_i$ can be found by taking partial derivatives with respect to parameters and equating to zero.
+
+$$\frac{\partial{J}}{{\partial{\beta_{in}}}} = \frac{\partial{J}}{{\partial{\tilde{x_n}}}} \frac{\partial{\tilde{x_n}}}{{\partial{\beta_{in}}}}$$
+$$\frac{\partial{J}}{{\partial{\tilde{x_n}}}} = \frac{-2}{N}(x_n-\tilde{x_n})^T$$
+Since data is centered at zero, $E[X] = 0$ and $b_1, b_2, \dots, b_M$ form an ONB.
+$$\frac{\partial{\tilde{x_n}}}{{\partial{\beta_{in}}}} = b_i \hspace{10px} \forall i =1,2,\dots,M $$
+$$\frac{\partial{J}}{{\partial{\beta_{in}}}} = \frac{-2}{N}(x_n-\tilde{x_n})^T b_i$$
+From equation 3,
+$$\frac{\partial{J}}{{\partial{\beta_{in}}}} = \frac{-2}{N}(x_n-\sum_{i=1}^{M}\beta_{in}b_i)^T b_i$$
+$$\frac{\partial{J}}{{\partial{\beta_{in}}}} = \frac{-2}{N}(x_n^Tb_i-\beta_{in}b_i^Tb_i)$$
+equating to zero,
+$$\frac{\partial{J}}{{\partial{\beta_{in}}}} = \frac{-2}{N}(x_n^Tb_i-\beta_{in}b_i^Tb_i) = 0$$
+\begin{equation}
+    \beta_{in} = x_n^Tb_i \hspace{10px} \forall i = 1, 2, \dots, M
+\end{equation}
+The above $\beta_{in}$ are coordinates of $\tilde{x_n}$ with respect to projected subspace of M-dimensions.
+
+From equation 3, 
+$$\tilde{x_n} = \sum_{i=1}^{M}\beta_{in}b_i    $$
+by using optimal $\beta_{in}$ from above,
+$$ \tilde{x_n} = \sum_{i=1}^{M}(x_n^Tb_i)b_i  $$
+The term which is in the open brackets in the above equation is dot product, and a scaler, we can manipulate it to get the following.
+\begin{equation}
+     \tilde{x_n} = \sum_{i=1}^{M}(b_ib_i^T)x_n 
+\end{equation}
+here $\sum_{i=1}^{M}(b_ib_i^T)$ is the projection matrix with respect to orthonormal basis $b_1, b_2, \dots, b_M$
+and also we can write $x_n$ as,
+\begin{equation}
+    x_n = \sum_{i=1}^{M}(b_ib_i^T)x_n + \sum_{i=M+1}^{D}(b_ib_i^T)x_n
+\end{equation}
+from the above two equations we can observe that $x_n$ and $\tilde{x_n}$ differ by the second additive term in equation 7.
+and
+$$x_n-\tilde{x_n} = \sum_{i=M+1}^{D}(b_ib_i^T)x_n $$
+\begin{equation}
+    x_n-\tilde{x_n} = \sum_{i=M+1}^{D}(b_i^Tx_n)b_i    
+\end{equation}
+using equation 8 in equation 4 gives the following.
+$$ J = \frac{1}{N} \sum_{n=1}^{N} ||\sum_{i=M+1}^{D}(b_i^Tx_n)b_i||^2 $$
+$$ J = \frac{1}{N} \sum_{n=1}^{N} ||\sum_{i=M+1}^{D}(b_i^Tx_n)b_i||^2 $$
+Using the properties of orthonormal basis, our expression simplifies to 
+$$ J = \frac{1}{N} \sum_{n=1}^{N}\sum_{i=M+1}^{D}(b_i^Tx_n)^2 $$
+$$ J = \frac{1}{N} \sum_{n=1}^{N}\sum_{i=M+1}^{D}(b_i^Tx_nx_n^Tb_i) $$
+Rearranging terms
+$$ J = \sum_{i=M+1}^{D} b_i^T (\frac{1}{N} \sum_{n=1}^{N} x_nx_n^T) b_i$$
+Now the term inside the open brackets is the data covariance matrix $S$!
+Now rewriting the loss term using $S$
+$$ J = \sum_{i=M+1}^{D} b_i^T S b_i$$
+Rearranging terms 
+$$ J = trace((\sum_{i=M+1}^{D} b_i b_i^T) S )$$
+In the above equation we have a projection matrix. The above expression says that, loss is the projection of covariance matrix on the subspace that is the orthogonal complement of 
+principle subspace. So we need to minimize the variance of the data that lies outside of the principle subspace. In other words, we need to maximize the variance of the data that lies on the principle subspace.
+From the following,
+$$ J = \sum_{i=M+1}^{D} b_i^T S b_i$$
+We need to find basis of dimension $M$ that minimize $J$ subject to some constraints.
+$$\argmin_{\forall b_i, ||b_i||_2=1} \sum_{i=M+1}^{D} b_i^T S b_i$$
+
+Using Lagrangian multipliers, there exists $\lambda_{M+1},\lambda_{M+2},\dots,\lambda_{D}$ such that the solution to the above is given by
+
+$$Minimize \hspace{10px} \sum_{i=M+1}^{D} b_i^T S b_i + \sum_{i=M+1}^{D} \lambda_i ||b_i||_2^2 $$
+setting the derivative with respect to $b_i$ to zero gives,
+$$Sb_i = \lambda_i b_i$$
+That is the solution is given by eigen vectors $b_i$ and corresponding eigen values $\lambda_i$.
+
+And the reconstruction error is given By
+$$ J = \sum_{i=M+1}^{D} b_i^T S b_i = \sum_{i=M+1}^{D} b_i^T \lambda_i b_i = \sum_{i=M+1}^{D} \lambda_i$$
+Clearly to minimize reconstruction error, we need to discard the $D-M$ directions that have the smallest eigenvalue of 
+Covariance matrix.
+\end{document}
+\grid
+\grid
